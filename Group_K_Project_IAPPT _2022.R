@@ -40,8 +40,8 @@ dim(SP500dailyReturns)
 getSymbols("JNJ", from = "2015-01-01", to = "2021-12-30") # Johnson & Johnson stock in the health care sector
 SP500dailyReturns <- cbind(SP500dailyReturns, JNJ = dailyReturn(JNJ$JNJ.Adjusted))
 dim(SP500dailyReturns)
-getSymbols("V", from = "2015-01-01", to = "2021-12-30") #PayPal stock in the financial sector
-SP500dailyReturns <- cbind(SP500dailyReturns, PYPL = dailyReturn(PYPL$PYPL.Adjusted))
+getSymbols("V", from = "2015-01-01", to = "2021-12-30") # Visa stock in the information technology sector
+SP500dailyReturns <- cbind(SP500dailyReturns, V = dailyReturn(V$V.Adjusted))
 dim(SP500dailyReturns)
 getSymbols("GS", from = "2015-01-01", to = "2021-12-30") # Goldman Sachs stock in the financial sector
 SP500dailyReturns <- cbind(SP500dailyReturns, GS = dailyReturn(GS$GS.Adjusted))
@@ -224,6 +224,7 @@ SP500weeklyReturnsTestEquallyWeighted <- apply(SP500weeklyReturnsTest, 1, mean)
 ## • Quintile portfolio
 
 #Daily
+
 SP500dailyReturnsTrainQuintile <- apply(SP500dailyReturnsTrain, 1, function(x) quantile(x, probs = c(0.2, 0.4, 0.6, 0.8))) # function(x) quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)) is a function that computes the 20th, 40th, 60th, and 80th percentiles of a vector x
 SP500dailyReturnsTestQuintile <- apply(SP500dailyReturnsTest, 1, function(x) quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)))
 
