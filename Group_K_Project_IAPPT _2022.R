@@ -5,8 +5,25 @@ install.packages("forecast")
 install.packages("fGarch")
 install.packages("rugarch")
 
-library(quantmod) #load quantmod library is used to download stock data from Yahoo Finance
+
+rm(list=ls(all=TRUE))
+graphics.off()
+close.screen(all = TRUE)
+erase.screen()
+windows.options(record=TRUE)
+
+p_load(xts)                   # to manipulate time series of stock data
+p_load(quantmod)              # to download stock data
+p_load(PerformanceAnalytics)  # to compute performance measures
+p_load(CVXR)                  # Convex Optimization in R
+p_load(riskParityPortfolio)   # RPP
+
+# -------------------------------------------------------------------------------------------
+# Loading Data
+# -------------------------------------------------------------------------------------------
+
 #1-Select a diversified portfolio of 11 S&P500 listed stocks, each belonging to one of the 11 different sectors that comprise index (e.g., Health Care, Financials, Consumer Discretionary, Industrials), and download market data from 01-01-2015 to 30-12-2021.
+
 # helth care sector stocks :ABBV (AbbVie Inc.), ABT (Abbott Laboratories), AMGN (Amgen Inc.), BIIB (Biogen Inc.), CELG (Celgene Corp.), GILD (Gilead Sciences Inc.), JNJ (Johnson & Johnson), MRK (Merck & Co. Inc.), PFE (Pfizer Inc.), REGN (Regeneron Pharmaceuticals Inc.), and TMO (Thermo Fisher Scientific Inc.) # nolint
 # financial sector stocks : AIG (American International Group), AXP (American Express), BK (Bank of New York Mellon), C (Citigroup), GS (Goldman Sachs), JPM (JPMorgan Chase), MS (Morgan Stanley), PNC (PNC Financial Services), SPGI (S&P Global), USB (U.S. Bancorp), and WFC (Wells Fargo)
 # consumer discretionary sector stocks : AAPL (Apple), AMZN (Amazon), CMCSA (Comcast), DIS (Walt Disney), FB (Facebook), GOOGL (Alphabet), HD (Home Depot), MCD (McDonald’s), SBUX (Starbucks), TGT (Target), and WMT (Walmart)
@@ -18,158 +35,154 @@ library(quantmod) #load quantmod library is used to download stock data from Yah
 # real estate sector stocks : AMT (American Tower), AVB (AvalonBay Communities), CBRE (CBRE Group), DRE (Duke Realty), EQIX (Equinix), EXR (Extra Space Storage), HCP (HCP), IRM (Iron Mountain), KIM (Kimco Realty), O (Realty Income), and VTR (Ventas)
 # utilities sector stocks : AEE (Ameren), AEP (American Electric Power), AES (AES), AWK (American Water Works), DUK (Duke Energy), ED (Consolidated Edison), EIX (Edison International), NEE (NextEra Energy), NI (NiSource), PPL (PPL), and XEL (Xcel Energy)
 
+#compute the daily and weekly linear return and log-return using the adjusted closing price information (APPL, MSFT, GOOGL, NKE, KO, TSLA, JNJ, V, GS, NFLX, AMT) and download market data from 01-01-2015 to 30-12-2021.
 
 getSymbols("AAPL", from = "2015-01-01", to = "2021-12-30") #Apple stock in the consumer discretionary sector
-SP500dailyReturns <- data.frame(AAPL = dailyReturn(AAPL$AAPL.Adjusted))
+SP500dailyPrices <- AAPL$AAPL.Adjusted
+head(SP500dailyPrices)
 dim(SP500dailyReturns)
+
 getSymbols("MSFT", from = "2015-01-01", to = "2021-12-30") #Microsoft stock in the information technology sector
-SP500dailyReturns <- cbind(SP500dailyReturns, MSFT = dailyReturn(MSFT$MSFT.Adjusted))
-dim(SP500dailyReturns)
-getSymbols("GOOGL", from = "2015-01-01", to = "2021-12-30")# Google stock in the information technology sector
-SP500dailyReturns <- cbind(SP500dailyReturns, GOOGL = dailyReturn(GOOGL$GOOGL.Adjusted))
-dim(SP500dailyReturns)
-getSymbols("NKE", from = "2015-01-01", to = "2021-12-30") # Nike stock in the industrials sector
-SP500dailyReturns <- cbind(SP500dailyReturns, NKE = dailyReturn(NKE$NKE.Adjusted))
-dim(SP500dailyReturns)
-getSymbols("KO", from = "2015-01-01", to = "2021-12-30") # Coca-Cola stock in the consumer staples sector
-SP500dailyReturns <- cbind(SP500dailyReturns, KO = dailyReturn(KO$KO.Adjusted))
-dim(SP500dailyReturns)
+SP500dailyPrices <- cbind(SP500dailyPrices, MSFT$MSFT.Adjusted) #ajusted closing price is used to compute the daily return of the stock without the effect of stock splits and dividends
+
+getSymbols("GOOGL", from = "2015-01-01", to = "2021-12-30") #Alphabet stock in the information technology sector is a holding company that owns Google and several other companies
+SP500dailyPrices <- cbind(SP500dailyPrices, GOOGL$GOOGL.Adjusted) #cbind is used to combine the data frames by columns
+
+getSymbols("NKE", from = "2015-01-01", to = "2021-12-30") #Nike stock in the consumer discretionary sector
+SP500dailyPrices <- cbind(SP500dailyPrices, NKE$NKE.Adjusted)
+
+getSymbols("KO", from = "2015-01-01", to = "2021-12-30") #Coca-Cola stock in the consumer staples sector
+SP500dailyPrices <- cbind(SP500dailyPrices, KO$KO.Adjusted)
+
 getSymbols("TSLA", from = "2015-01-01", to = "2021-12-30") #Tesla stock in the consumer discretionary sector
-SP500dailyReturns <- cbind(SP500dailyReturns, TSLA = dailyReturn(TSLA$TSLA.Adjusted))
-dim(SP500dailyReturns)
-getSymbols("JNJ", from = "2015-01-01", to = "2021-12-30") # Johnson & Johnson stock in the health care sector
-SP500dailyReturns <- cbind(SP500dailyReturns, JNJ = dailyReturn(JNJ$JNJ.Adjusted))
-dim(SP500dailyReturns)
-getSymbols("V", from = "2015-01-01", to = "2021-12-30") # Visa stock in the information technology sector
-SP500dailyReturns <- cbind(SP500dailyReturns, V = dailyReturn(V$V.Adjusted))
-dim(SP500dailyReturns)
-getSymbols("GS", from = "2015-01-01", to = "2021-12-30") # Goldman Sachs stock in the financial sector
-SP500dailyReturns <- cbind(SP500dailyReturns, GS = dailyReturn(GS$GS.Adjusted))
-dim(SP500dailyReturns)
+SP500dailyPrices <- cbind(SP500dailyPrices, TSLA$TSLA.Adjusted)
+
+getSymbols("JNJ", from = "2015-01-01", to = "2021-12-30") #Johnson & Johnson stock in the health care sector
+SP500dailyPrices <- cbind(SP500dailyPrices, JNJ$JNJ.Adjusted)
+
+getSymbols("V", from = "2015-01-01", to = "2021-12-30") #Visa stock in the information technology sector
+SP500dailyPrices <- cbind(SP500dailyPrices, V$V.Adjusted)
+
+getSymbols("GS", from = "2015-01-01", to = "2021-12-30") #Goldman Sachs stock
+SP500dailyPrices <- cbind(SP500dailyPrices, GS$GS.Adjusted)
+
 getSymbols("NFLX", from = "2015-01-01", to = "2021-12-30") #Netflix stock in the consumer discretionary sector
-SP500dailyReturns <- cbind(SP500dailyReturns, NFLX = dailyReturn(NFLX$NFLX.Adjusted))
-dim(SP500dailyReturns)
-getSymbols("AMT", from = "2015-01-01", to = "2021-12-30") # American Tower stock in the real estate sector
-SP500dailyReturns <- cbind(SP500dailyReturns, AMZN = dailyReturn(AMZN$AMZN.Adjusted))
-dim(SP500dailyReturns)
+SP500dailyPrices <- cbind(SP500dailyPrices, NFLX$NFLX.Adjusted)
 
-head(SP500dailyReturns)
-tail(SP500dailyReturns)
-#2-For each stock, compute the daily and weekly linear return and log-return using the adjusted closing price information.
-
-#Daily linear return
-SP500dailyReturns <- data.frame(AAPL = dailyReturn(AAPL$AAPL.Adjusted),
-                                MSFT = dailyReturn(MSFT$MSFT.Adjusted),
-                                GOOGL = dailyReturn(GOOGL$GOOGL.Adjusted),
-                                NKE = dailyReturn(NKE$NKE.Adjusted),
-                                KO = dailyReturn(KO$KO.Adjusted),
-                                TSLA = dailyReturn(TSLA$TSLA.Adjusted),
-                                JNJ = dailyReturn(JNJ$JNJ.Adjusted),
-                                V = dailyReturn(V$V.Adjusted),
-                                GS = dailyReturn(GS$GS.Adjusted),
-                                NFLX = dailyReturn(NFLX$NFLX.Adjusted),
-                                AMT = dailyReturn(AMT$AMT.Adjusted))
-head(SP500dailyReturns)
-tail(SP500dailyReturns)
-dim(SP500dailyReturns)
-
-#Weekly linear return
-SP500weeklyReturns <- data.frame(AAPL = weeklyReturn(AAPL$AAPL.Adjusted),
-                            MSFT = weeklyReturn(MSFT$MSFT.Adjusted),
-                            GOOGL = weeklyReturn(GOOGL$GOOGL.Adjusted),
-                            NKE = weeklyReturn(NKE$NKE.Adjusted),
-                            KO = weeklyReturn(KO$KO.Adjusted),
-                            TSLA = weeklyReturn(TSLA$TSLA.Adjusted),
-                            JNJ = weeklyReturn(JNJ$JNJ.Adjusted),
-                            V = weeklyReturn(V$V.Adjusted),
-                            GS = weeklyReturn(GS$GS.Adjusted),
-                            NFLX = weeklyReturn(NFLX$NFLX.Adjusted),
-                            AMT = weeklyReturn(AMT$AMT.Adjusted))
-head(SP500weeklyReturns)
-tail(SP500weeklyReturns)
-dim(SP500weeklyReturns)
+getSymbols("AMT", from = "2015-01-01", to = "2021-12-30") #American Tower stock in the real estate sector
+SP500dailyPrices <- cbind(SP500dailyPrices, AMT$AMT.Adjusted)
 
 
-#Daily log return
-SP500dailyReturnsLog <- data.frame(AAPL = dailyReturn(AAPL$AAPL.Adjusted, type = "log"),
-                                MSFT = dailyReturn(MSFT$MSFT.Adjusted, type = "log"),
-                                GOOGL = dailyReturn(GOOGL$GOOGL.Adjusted, type = "log"),
-                                NKE = dailyReturn(NKE$NKE.Adjusted, type = "log"),
-                                KO = dailyReturn(KO$KO.Adjusted, type = "log"),
-                                TSLA = dailyReturn(TSLA$TSLA.Adjusted, type = "log"),
-                                JNJ = dailyReturn(JNJ$JNJ.Adjusted, type = "log"),
-                                V = dailyReturn(V$V.Adjusted, type = "log"),
-                                GS = dailyReturn(GS$GS.Adjusted, type = "log"),
-                                NFLX = dailyReturn(NFLX$NFLX.Adjusted, type = "log"),
-                                AMT = dailyReturn(AMT$AMT.Adjusted, type = "log"))
-head(SP500dailyReturnsLog)
-tail(SP500dailyReturnsLog)
-dim(SP500dailyReturnsLog)
+# dataframe assign column names as stock
+colnames(SP500dailyPrices) <- c("AAPL", "MSFT", "GOOGL", "NKE", "KO", "TSLA", "JNJ", "V", "GS", "NFLX", "AMT")
 
-#Weekly log return
-SP500weeklyReturnsLog <- data.frame(AAPL = weeklyReturn(AAPL$AAPL.Adjusted, type = "log"),
-                            MSFT = weeklyReturn(MSFT$MSFT.Adjusted, type = "log"),
-                            GOOGL = weeklyReturn(GOOGL$GOOGL.Adjusted, type = "log"),
-                            NKE = weeklyReturn(NKE$NKE.Adjusted, type = "log"),
-                            KO = weeklyReturn(KO$KO.Adjusted, type = "log"),
-                            TSLA = weeklyReturn(TSLA$TSLA.Adjusted, type = "log"),
-                            JNJ = weeklyReturn(JNJ$JNJ.Adjusted, type = "log"),
-                            V = weeklyReturn(V$V.Adjusted, type = "log"),
-                            GS = weeklyReturn(GS$GS.Adjusted, type = "log"),
-                            NFLX = weeklyReturn(NFLX$NFLX.Adjusted, type = "log"),
-                            AMT = weeklyReturn(AMT$AMT.Adjusted, type = "log"))
-head(SP500weeklyReturnsLog)
-tail(SP500weeklyReturnsLog)
-dim(SP500weeklyReturnsLog)
+head(SP500dailyPrices)
+tail (SP500dailyPrices)
+summary(SP500dailyPrices)
+dim(SP500dailyPrices)
+
+#weekly prices 
+SP500weeklyPrices <- SP500dailyPrices[seq(1, nrow(SP500dailyPrices), 5),] #select every 5th row
+head(SP500weeklyPrices)
+tail(SP500weeklyPrices)
+dim(SP500weeklyPrices)
 
 
-"3-compute Empirically investigate the stylized facts of financial market returns different data frequencies: The statistical distribution of financial market returns is not normal,
-The volatility of return processes is not constant with respect to time, The absolute or squared returns are highly autocorrelated, Extreme returns are observed closely in time (volatility clustering),
-The empirical distribution of returns is skewed to the left."
-
-#3.1-Compute the mean, variance, skewness, and kurtosis of the daily and weekly returns for each stock.
-#Daily
-SP500dailyReturnsMean <- apply(SP500dailyReturns, 2, mean)
-SP500dailyReturnsVar <- apply(SP500dailyReturns, 2, var)
-SP500dailyReturnsSkew <- apply(SP500dailyReturns, 2, skewness)
-SP500dailyReturnsKurt <- apply(SP500dailyReturns, 2, kurtosis)
-
-#Weekly
-SP500weeklyReturnsMean <- apply(SP500weeklyReturns, 2, mean)
-SP500weeklyReturnsVar <- apply(SP500weeklyReturns, 2, var)
-SP500weeklyReturnsSkew <- apply(SP500weeklyReturns, 2, skewness)
-SP500weeklyReturnsKurt <- apply(SP500weeklyReturns, 2, kurtosis)
-
-#3.2-Compute the mean, variance, skewness, and kurtosis of the daily and weekly log-returns for each stock.
-#Daily
-SP500dailyReturnsLogMean <- apply(SP500dailyReturnsLog, 2, mean)
-SP500dailyReturnsLogVar <- apply(SP500dailyReturnsLog, 2, var)
-SP500dailyReturnsLogSkew <- apply(SP500dailyReturnsLog, 2, skewness)
-
-#Weekly
-SP500weeklyReturnsLogMean <- apply(SP500weeklyReturnsLog, 2, mean)
-SP500weeklyReturnsLogVar <- apply(SP500weeklyReturnsLog, 2, var)
-SP500weeklyReturnsLogSkew <- apply(SP500weeklyReturnsLog, 2, skewness)
-
-#3.3-Compute the autocorrelation function (ACF) of the daily and weekly returns for each stock.
-#Daily
-SP500dailyReturnsACF <- apply(SP500dailyReturns, 2, acf)
-SP500dailyReturnsACF
-
-#Weekly
-SP500weeklyReturnsACF <- apply(SP500weeklyReturns, 2, acf)
-SP500weeklyReturnsACF
-
-#3.4-Compute the autocorrelation function (ACF) of the daily and weekly log-returns for each stock.
-#Daily
-SP500dailyReturnsLogACF <- apply(SP500dailyReturnsLog, 2, acf)
-SP500dailyReturnsLogACF
-
-#Weekly
-SP500weeklyReturnsLogACF <- apply(SP500weeklyReturnsLog, 2, acf)
-SP500weeklyReturnsLogACF
+#plot the adjusted closing price of each stocks color rainbow
+plot(SP500dailyPrices, col = rainbow(11), main = "Adjusted Closing Price of 11 Stocks", xlab = "Date", ylab = "Adjusted Closing Price")
+legend("topright", legend = colnames(SP500dailyPrices), col = rainbow(11), lty = 1, cex = 0.8)
 
 
+#2-For each stock, compute the daily and weekly linear  and log using the adjusted closing price information
+
+#2.1.1-Daily linear return
+SP500dailyPrices_linearReturn <- (SP500dailyPrices / lag(SP500dailyPrices) - 1) [-1]#[-1] is to drop the first row
+
+head(SP500dailyPrices_linearReturn)
+summary(SP500dailyPrices_linearReturn)
+dim(SP500dailyPrices_linearReturn)
+
+#2.1.2Daily log-return diff
+SP500dailyPrices_logReturn <- diff(log(SP500dailyPrices))[-1] #diff function is used to compute the difference between the current and previous value
+head(SP500dailyPrices_logReturn)
+summary(SP500dailyPrices_logReturn)
+dim(SP500dailyPrices_logReturn)
+
+
+
+#2.2.1-Weekly linear return
+SP500weeklyPrices_linearReturn <- (SP500weeklyPrices / lag(SP500weeklyPrices) - 1) [-1]#lag function is used to shift the data by one period
+
+head(SP500weeklyPrices_linearReturn)
+summary(SP500weeklyPrices_linearReturn)
+dim(SP500weeklyPrices_linearReturn)
+
+#2.2.2Weekly log-return diff
+SP500weeklyPrices_logReturn <- diff(log(SP500weeklyPrices))[-1] #diff function is used to compute the difference between the current and previous value
+head(SP500weeklyPrices_logReturn)
+summary(SP500weeklyPrices_logReturn)
+
+
+#save the data frame as a csv file on the folder "C:\Users\João Carlos Fidalgo\OneDrive - Banco de Cabo Verde\Pós-Graduação_ Data_science\2-IAPT_Investments, Asset Pricing_Portfolio Theory"
+write.csv(SP500dailyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices.csv", row.names = TRUE)
+write.csv(SP500dailyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_linearReturn.csv", row.names = TRUE)
+write.csv(SP500dailyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_logReturn.csv", row.names = TRUE)
+write.csv(SP500weeklyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices.csv", row.names = TRUE)
+write.csv(SP500weeklyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_linearReturn.csv", row.names = TRUE)
+write.csv(SP500weeklyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_logReturn.csv", row.names = TRUE)
+
+## number of stocks
+
+# number of days
+
+
+#3-Compute Empirically investigate the stylized facts of financial market returns different data frequencies: 
+#3.1-The statistical distribution of financial market returns is not normal
+
+#3.1.1-Daily linearof market
+
+hist(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+
+qqnorm(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$AAPL, col = "blue")
+
+#3.1.2-Daily log
+hist(SP500dailyPrices_logReturn$AAPL, main = "Daily Log Return", xlab = "Daily Log Return", col = "blue", breaks = 100) #histogram of daily log return
+
+qqnorm(SP500dailyPrices_logReturn$AAPL, main = "Daily Log Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily log return
+qqline(SP500dailyPrices_logReturn$AAPL, col = "blue")
+
+#3.1.3-Weekly linear
+hist(SP500weeklyPrices_linearReturn$AAPL, main = "Weekly Linear Return", xlab = "Weekly Linear Return", col = "blue", breaks = 100) #histogram of weekly linear return
+
+qqnorm(SP500weeklyPrices_linearReturn$AAPL, main = "Weekly Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of weekly linear return
+qqline(SP500weeklyPrices_linearReturn$AAPL, col = "blue")
+
+#3.1.4-Weekly log
+hist(SP500weeklyPrices_logReturn$AAPL, main = "Weekly Log Return", xlab = "Weekly Log Return", col = "blue", breaks = 100) #histogram of weekly log return
+
+qqnorm(SP500weeklyPrices_logReturn$AAPL, main = "Weekly Log Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of weekly log return
+qqline(SP500weeklyPrices_logReturn$AAPL, col = "blue")
+
+#3.2-The volatility of return processes is not constant with respect to time, 
+
+#3.2.1-Daily linear
+plot(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Time", ylab = "Daily Linear Return", col = "blue") #plot of daily linear return
+
+#3.3-The absolute or squared returns are highly autocorrelated
+
+#3.3.1-Daily linear
+acf(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Lag", ylab = "Autocorrelation", col = "blue") #acf of daily linear return
+
+#3.4-Extreme returns are observed closely in time (volatility clustering),
+
+#3.4.1-Daily linear
+plot(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Time", ylab = "Daily Linear Return", col = "blue") #plot of daily linear return
+
+#3.5-The empirical distribution of returns is skewed to the left."
+
+#3.5.1-Daily linear
+hist(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
 
 "4- Split the dataset of daily returns into a training set (2/3 of data) and a test set (1/3 of data) to:
 A. Empirically investigate the performance of the following Heuristic Portfolios
@@ -190,14 +203,73 @@ F. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and 
 "
 
 ## Split the dataset of daily returns into a training set (2/3 of data) and a test set (1/3 of data)
+#split SP500dailyPrices_linearReturn  
+SP500dailyPrices_linearReturn_train <- SP500dailyPrices_linearReturn[1:round(0.66*nrow(SP500dailyPrices_linearReturn)),]
+SP500dailyPrices_linearReturn_test <- SP500dailyPrices_linearReturn[(round(0.66*nrow(SP500dailyPrices_linearReturn))+1):nrow(SP500dailyPrices_linearReturn),]
+dim(SP500dailyPrices_linearReturn_train) # 1162 rows and 11 columns
+dim(SP500dailyPrices_linearReturn_test) # 598 rows and 11 columns
 
-#Daily
-SP500dailyReturnsTrain <- SP500dailyReturns[1:round(0.66*nrow(SP500dailyReturns)),] #2/3 of data
-SP500dailyReturnsTest <- SP500dailyReturns[(round(0.66*nrow(SP500dailyReturns))+1):nrow(SP500dailyReturns),] #1/3 of data
+#split SP500dailyPrices_logReturn
+SP500dailyPrices_logReturn_train <- SP500dailyPrices_logReturn[1:round(0.66*nrow(SP500dailyPrices_logReturn)),]
+SP500dailyPrices_logReturn_test <- SP500dailyPrices_logReturn[(round(0.66*nrow(SP500dailyPrices_logReturn))+1):nrow(SP500dailyPrices_logReturn),]
+dim(SP500dailyPrices_logReturn_train) # 1162 rows and 11 columns
+dim(SP500dailyPrices_logReturn_test) # 598 rows and 11 columns
 
-#Weekly
-SP500weeklyReturnsTrain <- SP500weeklyReturns[1:round(0.66*nrow(SP500weeklyReturns)),] #2/3 of data
-SP500weeklyReturnsTest <- SP500weeklyReturns[(round(0.66*nrow(SP500weeklyReturns))+1):nrow(SP500weeklyReturns),] #1/3 of data
+###################################################################
+
+#4.1-A. Empirically investigate the performance of the following Heuristic Portfolios
+
+#4.1-A.1-Buy & Hold
+# Estimation of the expected return and covariance matrix
+mu <- colMeans(SP500dailyPrices_logReturn_train) #vector of expected returns 
+Sigma <- cov(SP500dailyPrices_logReturn_train) # covariance matrix
+
+w_BnH <- diag(1,11) 
+rownames(w_BnH) <- colnames(SP500dailyPrices_linearReturn_train)
+colnames(w_BnH) <- paste0("w_BnH_", colnames(SP500dailyPrices_linearReturn_train))
+w_BnH
+
+# compute returns of all B&H portfolios
+#BnH_returns_linearReturn <- xts(SP500dailyPrices_linearReturn %*% w_BnH, index(SP500dailyPrices_linearReturn))
+BnH_returns_linearReturn_train <- xts(SP500dailyPrices_linearReturn_train %*% w_BnH, index(SP500dailyPrices_linearReturn_train))
+head(BnH_returns_linearReturn_train)
+
+BnH_returns_linearReturn_test <- xts(SP500dailyPrices_linearReturn_test %*% w_BnH, index(SP500dailyPrices_linearReturn_test))
+head(BnH_returns_linearReturn_test)
+
+dim(BnH_returns_linearReturn_train) # 1162 rows and 11 columns
+dim(BnH_returns_linearReturn_test) # 598 rows and 11 columns
+
+#Performance measures
+library(PerformanceAnalytics)
+# Table of Annualized Return, Annualized Std Dev, and Annualized Sharpe
+t(table.AnnualizedReturns(BnH_returns_linearReturn_train, scale = 252, Rf = 0.0))
+t(table.AnnualizedReturns(BnH_returns_linearReturn_test, scale = 252, Rf = 0.0))
+
+#Summary statistics of the returns of all B&H portfolios
+table.DownsideRisk(BnH_returns_linearReturn_train)
+
+#4.1-A.2-Equally weighted portfolio
+# Estimation of the expected return and covariance matrix
+mu <- colMeans(SP500dailyPrices_logReturn_train) #vector of expected returns
+Sigma <- cov(SP500dailyPrices_logReturn_train) # covariance matrix
+
+w_EquallyWeighted <- rep(1/11,11)
+rownames(w_EquallyWeighted) <- colnames(SP500dailyPrices_linearReturn_train)
+colnames(w_EquallyWeighted) <- paste0("w_EquallyWeighted", colnames(SP500dailyPrices_linearReturn_train))
+
+# compute returns of all Equally weighted portfolios
+#EquallyWeighted_returns_linearReturn <- xts(SP500dailyPrices_linearReturn %*% w_EquallyWeighted, index(SP500dailyPrices_linearReturn))
+EquallyWeighted_returns_linearReturn_train <- xts(SP500dailyPrices_linearReturn_train %*% w_EquallyWeighted, index(SP500dailyPrices_linearReturn_train))
+head(EquallyWeighted_returns_linearReturn_train)
+
+EquallyWeighted_returns_linearReturn_test <- xts(SP500dailyPrices_linearReturn_test %*% w_EquallyWeighted, index(SP500dailyPrices_linearReturn_test))
+head(EquallyWeighted_returns_linearReturn_test)
+
+
+#4.1-A.3-Quintile portfolio
+#4.1-A.4-Global maximum return portfolio
+
 
 ## A. Empirically investigate the performance of the following Heuristic Portfolios
 ## • Buy & Hold
@@ -205,6 +277,11 @@ SP500weeklyReturnsTest <- SP500weeklyReturns[(round(0.66*nrow(SP500weeklyReturns
 #Daily
 SP500dailyReturnsTrainBuyHold <- SP500dailyReturnsTrain[1,] #first row of the training set
 SP500dailyReturnsTestBuyHold <- SP500dailyReturnsTest[1,]
+#plot the result
+plot(SP500dailyReturnsTrainBuyHold, type = "l", col = "blue", lwd = 2, 
+     main = "Buy & Hold", xlab = "Time", ylab = "Returns")
+lines(SP500dailyReturnsTestBuyHold, col = "red", lwd = 2)
+
 
 #Weekly
 SP500weeklyReturnsTrainBuyHold <- SP500weeklyReturnsTrain[1,] 
@@ -215,99 +292,149 @@ SP500weeklyReturnsTestBuyHold <- SP500weeklyReturnsTest[1,]
 #Daily
 SP500dailyReturnsTrainEquallyWeighted <- apply(SP500dailyReturnsTrain, 1, mean) # apply is a function that applies a function to each column of a matrix
 SP500dailyReturnsTestEquallyWeighted <- apply(SP500dailyReturnsTest, 1, mean)
+#plot the results
+plot(SP500dailyReturnsTrainEquallyWeighted, type = "l", col = "blue", main = "Equally Weighted Portfolio", xlab = "Date", ylab = "Returns")
+lines(SP500dailyReturnsTestEquallyWeighted, col = "red")
+legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
 
 #Weekly
 SP500weeklyReturnsTrainEquallyWeighted <- apply(SP500weeklyReturnsTrain, 1, mean)
 SP500weeklyReturnsTestEquallyWeighted <- apply(SP500weeklyReturnsTest, 1, mean)
 
 
-## • Quintile portfolio
-
-#Daily
-
-SP500dailyReturnsTrainQuintile <- apply(SP500dailyReturnsTrain, 1, function(x) quantile(x, probs = c(0.2, 0.4, 0.6, 0.8))) # function(x) quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)) is a function that computes the 20th, 40th, 60th, and 80th percentiles of a vector x
-SP500dailyReturnsTestQuintile <- apply(SP500dailyReturnsTest, 1, function(x) quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)))
-
-## • Global maximum return (GMR) portfolio
-
-#Daily
-SP500dailyReturnsTrainGMR <- apply(SP500dailyReturnsTrain, 1, max) 
-SP500dailyReturnsTestGMR <- apply(SP500dailyReturnsTest, 1, max)
-
-####################################################################################################################
-#####################ERROR IN THE CODE BELOW, I DON'T KNOW HOW TO FIX IT############################################
-
-## B. Estimate the Markowitz’s mean-variance portfolio (MVP) with no short-selling´
 
 library(PortfolioAnalytics)
 library(PerformanceAnalytics)
 
-#Daily  
-#SP500dailyReturnsTrainMVP <- MVP(SP500dailyReturnsTrain, short = FALSE)
-#SP500dailyReturnsTestMVP <- MVP(SP500dailyReturnsTest, short = FALSE)
+
+## • Quintile portfolio its used to divide the stocks in 5 groups according to their returns
+quintile_portfolio_fun <- function(x) {
+  quintile <- cut(x, breaks = 5, labels = FALSE)
+  quintile_portfolio <- rep(0, length(x))
+  for (i in 1:5) {
+    quintile_portfolio[quintile == i] <- 1 / sum(quintile == i)
+  }
+  return(quintile_portfolio)
+}
+
 
 #Daily
-SP500dailyReturnsTrainMVP <- apply(SP500dailyReturnsTrain, 1, mean)
-SP500dailyReturnsTestMVP <- apply(SP500dailyReturnsTest, 1, mean)
+SP500dailyReturnsTrainQuintile <- apply(SP500dailyReturnsTrain, 2, quintile_portfolio_fun)
+SP500dailyReturnsTestQuintile <- apply(SP500dailyReturnsTest, 2, quintile_portfolio_fun)
+#plot the results
+plot(SP500dailyReturnsTrainQuintile, type = "l", col = "blue", main = "Quintile Portfolio", xlab = "Date", ylab = "Returns")
+lines(SP500dailyReturnsTestQuintile, col = "red")
+legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
+
+
+## B. Estimate the Markowitz’s mean-variance portfolio (MVP) with no short-selling
+Markowitz_portfolio_fun <- function(dataset, lambda=0.5, ...) {
+  X <- diff(log(dataset$adjusted))[-1]  # compute log returns
+  mu    <- colMeans(X)  # compute mean vector
+  Sigma <- cov(X)       # compute the SCM
+  # design mean-variance portfolio
+  w <- Variable(nrow(Sigma))
+  prob <- Problem(Maximize(t(mu) %*% w - lambda*quad_form(w, Sigma)),
+                  constraints = list(w >= 0, sum(w) == 1))
+  result <- solve(prob)
+  return(as.vector(result$getValue(w)))
+#Daily
+SP500dailyReturnsTrainMarkowitz <- Markowitz_portfolio_fun(SP500dailyReturnsTrain)
+SP500dailyReturnsTestMarkowitz <- Markowitz_portfolio_fun(SP500dailyReturnsTest)
+
+#plot the results
+plot(SP500dailyReturnsTrainMarkowitz, type = "l", col = "blue", main = "Markowitz Portfolio", xlab = "Date", ylab = "Returns")
+lines(SP500dailyReturnsTestMarkowitz, col = "red")
+legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
 
 ## C. Estimate the Global Minimum Variance Portfolio (GMVP) with no short-selling 
+GMVP_portfolio_fun <- function(dataset, ...) {
+  X <- diff(log(dataset$adjusted))[-1]  # compute log returns
+  Sigma <- cov(X)  # compute SCM
+  # design GMVP
+  w <- solve(Sigma, rep(1, nrow(Sigma)))
+  w <- abs(w)/sum(abs(w))
+  return(w)
+}
 
 #Daily
-#SP500dailyReturnsTrainGMVP <- gmvp(SP500dailyReturnsTrain, short = FALSE)
-#SP500dailyReturnsTestGMVP <- gmvp(SP500dailyReturnsTest, short = FALSE)
+SP500dailyReturnsTrainGMVP <- GMVP_portfolio_fun(SP500dailyReturnsTrain)
+SP500dailyReturnsTestGMVP <- GMVP_portfolio_fun(SP500dailyReturnsTest)
 
-SP500dailyReturnsTrainGMVP <- apply(SP500dailyReturnsTrain, 1, min)
-SP500dailyReturnsTestGMVP <- apply(SP500dailyReturnsTest, 1, min)
+#plot the results
+plot(SP500dailyReturnsTrainGMVP, type = "l", col = "blue", main = "GMVP Portfolio", xlab = "Date", ylab = "Returns")
+lines(SP500dailyReturnsTestGMVP, col = "red")
+legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
 
 
 
 ## D. Estimate the Maximum Sharpe ratio portfolio (MSRP)
+MSRP_portfolio_fun <- function(dataset, ...) {
+  X <- diff(log(dataset$adjusted))[-1]  # compute log returns
+  mu    <- colMeans(X)  # compute mean vector
+  Sigma <- cov(X)       # compute the SCM
+  # design MSRP
+  w <- Variable(nrow(Sigma))
+  prob <- Problem(Maximize(t(mu) %*% w / sqrt(quad_form(w, Sigma))),
+                  constraints = list(w >= 0, sum(w) == 1))
+  result <- solve(prob)
+  return(as.vector(result$getValue(w)))
+}
 
 #Daily
-SP500dailyReturnsTrainMSRP <- apply(SP500dailyReturnsTrain, 1, max)
-SP500dailyReturnsTestMSRP <- apply(SP500dailyReturnsTest, 1, max)
+SP500dailyReturnsTrainMSRP <- apply(SP500dailyReturnsTrain, 2, MSRP_portfolio_fun)
+SP500dailyReturnsTestMSRP <- apply(SP500dailyReturnsTest, 2, MSRP_portfolio_fun)
 
-#SP500dailyReturnsTrainMSRP <- msrp(SP500dailyReturnsTrain)
-#SP500dailyReturnsTestMSRP <- msrp(SP500dailyReturnsTest)
+# Backtesting and Plotting
+portfolios <- list(
+  "Buy & Hold" = SP500dailyReturnsTrainBuyHold,
+  "Equally Weighted" = SP500dailyReturnsTrainEquallyWeighted,
+  "Quintile" = SP500dailyReturnsTrainQuintile,
+  "Markowitz" = SP500dailyReturnsTrainMarkowitz,
+  "GMVP" = SP500dailyReturnsTrainGMVP,
+  "MSRP" = SP500dailyReturnsTrainMSRP
+)
+
+backtest <- function(portfolio, dataset) {
+  portfolio <- as.matrix(portfolio)
+  portfolio <- portfolio / rowSums(portfolio)
+  portfolio <- as.data.frame(portfolio)
+  colnames(portfolio) <- colnames(dataset)
+  portfolio <- as.matrix(portfolio)
+  portfolio <- portfolio * dataset
+  portfolio <- as.data.frame(portfolio)
+  portfolio <- rowSums(portfolio)
+  return(portfolio)
+}
+# portfolio weights
+backtest$Markowitz <- backtest(portfolios$Markowitz, SP500dailyReturnsTrain)
+
+
+
 
 ## E. Empirically investigate the performance of the following Risk-Based Portfolios:
+
 ## • Global minimum variance portfolio
-
 #Daily
-SP500dailyReturnsTrainGMVP <- apply(SP500dailyReturnsTrain, 1, min)
-SP500dailyReturnsTestGMVP <- apply(SP500dailyReturnsTest, 1, min)
 
-#SP500dailyReturnsTrainGMVP <- gmvp(SP500dailyReturnsTrain, short = FALSE)
-#SP500dailyReturnsTestGMVP <- gmvp(SP500dailyReturnsTest, short = FALSE)
 
 ## • Inverse volatility portfolio
-
 #Daily
 SP500dailyReturnsTrainInverseVolatility <- apply(SP500dailyReturnsTrain, 1, function(x) 1/sd(x)) # function(x) 1/sd(x) is a function that computes the inverse of the standard deviation of a vector x
 SP500dailyReturnsTestInverseVolatility <- apply(SP500dailyReturnsTest, 1, function(x) 1/sd(x))
 
-#SP500dailyReturnsTrainInverseVolatility <- inverse.volatility(SP500dailyReturnsTrain)
-#SP500dailyReturnsTestInverseVolatility <- inverse.volatility(SP500dailyReturnsTest)
 
 ## • Risk parity portfolio 
-
-
 #Daily
-SP500dailyReturnsTrainRiskParity <- risk.parity(SP500dailyReturnsTrain)
-SP500dailyReturnsTestRiskParity <- risk.parity(SP500dailyReturnsTest)
+
 
 
 ## • Most diversified portfolio
-
 #Daily
-SP500dailyReturnsTrainMostDiversified <- most.diversified(SP500dailyReturnsTrain)
-SP500dailyReturnsTestMostDiversified <- most.diversified(SP500dailyReturnsTest)
 
 ## • Maximum decorrelation portfolio
-
 #Daily
-SP500dailyReturnsTrainMaximumDecorrelation <- maximum.decorrelation(SP500dailyReturnsTrain)
-SP500dailyReturnsTestMaximumDecorrelation <- maximum.decorrelation(SP500dailyReturnsTest)
+
 
 ## F. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
 
