@@ -184,23 +184,13 @@ plot(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "T
 #3.5.1-Daily linear
 hist(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
 
-"4- Split the dataset of daily returns into a training set (2/3 of data) and a test set (1/3 of data) to:
-A. Empirically investigate the performance of the following Heuristic Portfolios
-    • Buy & Hold
-    • Equally weighted portfolio
-    • Quintile portfolio
-    • Global maximum return portfolio
-B. Estimate the Markowitz’s mean-variance portfolio (MVP) with no short-selling
-C. Estimate the Global Minimum Variance Portfolio (GMVP) with no short-selling
-D. Estimate the Maximum Sharpe ratio portfolio (MSRP)
-E. Empirically investigate the performance of the following Risk-Based Portfolios:
-    • Global minimum variance portfolio
-    • Inverse volatility portfolio
-    • Risk parity portfolio
-    • Most diversified portfolio
-    • Maximum decorrelation portfolio
-F. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
-"
+#4- Split the dataset of daily returns into a training set (2/3 of data) and a test set (1/3 of data) to:
+#A. Empirically investigate the performance of the following Heuristic Portfolios
+#    • Buy & Hold
+#    • Equally weighted portfolio
+#    • Quintile portfolio
+#    • Global maximum return portfolio
+
 
 ## Split the dataset of daily returns into a training set (2/3 of data) and a test set (1/3 of data)
 #split SP500dailyPrices_linearReturn  
@@ -248,250 +238,112 @@ t(table.AnnualizedReturns(BnH_returns_linearReturn_test, scale = 252, Rf = 0.0))
 
 #Summary statistics of the returns of all B&H portfolios
 table.DownsideRisk(BnH_returns_linearReturn_train)
+table.DownsideRisk(BnH_returns_linearReturn_test)
+
+chart.CumReturns(BnH_returns_linearReturn_train, main = "Cumulative Returns of Buy & Hold Portfolios", legend.loc = "topleft")
+chart.Boxplot(BnH_returns_linearReturn_train, main = "Boxplot of Buy & Hold Portfolios", legend.loc = "topleft")
+chart.Correlation(BnH_returns_linearReturn_train, main = "Correlation of Buy & Hold Portfolios", legend.loc = "topleft")
+
 
 #4.1-A.2-Equally weighted portfolio
 # Estimation of the expected return and covariance matrix
 mu <- colMeans(SP500dailyPrices_logReturn_train) #vector of expected returns
 Sigma <- cov(SP500dailyPrices_logReturn_train) # covariance matrix
 
-w_EquallyWeighted <- rep(1/11,11)
-rownames(w_EquallyWeighted) <- colnames(SP500dailyPrices_linearReturn_train)
-colnames(w_EquallyWeighted) <- paste0("w_EquallyWeighted", colnames(SP500dailyPrices_linearReturn_train))
+####validar o codigo####
+w_EW <- rep(1/11,11)
+names(w_EW) <- colnames(SP500dailyPrices_linearReturn_train)
+w_EW
 
-# compute returns of all Equally weighted portfolios
-#EquallyWeighted_returns_linearReturn <- xts(SP500dailyPrices_linearReturn %*% w_EquallyWeighted, index(SP500dailyPrices_linearReturn))
-EquallyWeighted_returns_linearReturn_train <- xts(SP500dailyPrices_linearReturn_train %*% w_EquallyWeighted, index(SP500dailyPrices_linearReturn_train))
-head(EquallyWeighted_returns_linearReturn_train)
-
-EquallyWeighted_returns_linearReturn_test <- xts(SP500dailyPrices_linearReturn_test %*% w_EquallyWeighted, index(SP500dailyPrices_linearReturn_test))
-head(EquallyWeighted_returns_linearReturn_test)
-
+# compute returns of all EW portfolios
+#EW_returns_linearReturn <- xts(SP500dailyPrices_linearReturn %*% w_EW, index(SP500dailyPrices_linearReturn))
+EW_returns_linearReturn_train <- xts(SP500dailyPrices_linearReturn_train %*% w_EW, index(SP500dailyPrices_linearReturn_train))
+head(EW_returns_linearReturn_train)
 
 #4.1-A.3-Quintile portfolio
-#4.1-A.4-Global maximum return portfolio
+#  Quintile divide them 3 part portfolios (Q1, Q2, Q3)
+# Estimation of the expected return and covariance matrix
+mu <- colMeans(SP500dailyPrices_logReturn_train) #vector of expected returns
+Sigma <- cov(SP500dailyPrices_logReturn_train) # covariance matrix
+
+# 1- 1st quintile portfolio
+w_1stQ <- rep(1/11,11)
+names(w_1stQ) <- colnames(SP500dailyPrices_linearReturn_train)
+w_1stQ[1:5] <- 0
+w_1stQ
+
+# 2- 2nd quintile portfolio
+w_2ndQ <- rep(1/11,11)
+names(w_2ndQ) <- colnames(SP500dailyPrices_linearReturn_train)
+w_2ndQ[1:5] <- 0
+w_2ndQ[6:10] <- 0
+w_2ndQ
+
+# 3- 3rd quintile portfolio
+w_3rdQ <- rep(1/11,11)
+names(w_3rdQ) <- colnames(SP500dailyPrices_linearReturn_train)
+w_3rdQ[6:10] <- 0
+w_3rdQ
+
+# combine all 3 portfolios
+w_Quintile <- cbind(w_1stQ, w_2ndQ, w_3rdQ)
+rownames(w_Quintile) <- colnames(SP500dailyPrices_linearReturn_train)
+colnames(w_Quintile) <- paste0("w_Quintile_", colnames(SP500dailyPrices_linearReturn_train))
+w_Quintile
 
 
-## A. Empirically investigate the performance of the following Heuristic Portfolios
-## • Buy & Hold
+#4.1-A.4-Global maximum return portfolio (GMRP)
+# compute weights of the GMRP
+w_GMRP <- mu/sum(mu)
+w_GMRP
 
-#Daily
-SP500dailyReturnsTrainBuyHold <- SP500dailyReturnsTrain[1,] #first row of the training set
-SP500dailyReturnsTestBuyHold <- SP500dailyReturnsTest[1,]
-#plot the result
-plot(SP500dailyReturnsTrainBuyHold, type = "l", col = "blue", lwd = 2, 
-     main = "Buy & Hold", xlab = "Time", ylab = "Returns")
-lines(SP500dailyReturnsTestBuyHold, col = "red", lwd = 2)
+i_max <- which(mu == max(mu))
+w_GMRP <- matrix(0, nrow = 11, ncol = 1)
+w_GMRP[i_max,1] <- 1
+names(w_GMRP) <- colnames(SP500dailyPrices_linearReturn_train)
+w_GMRP
 
+#put together all portfolios w_EW, w_Quintile, w_GMRP
+w_heuristic <- cbind(w_EW, w_Quintile, w_GMRP)
+round(w_heuristic, digits = 2)
+rownames(w_heuristic) <- colnames(SP500dailyPrices_linearReturn_train)
+colnames(w_heuristic) <- paste0("w_heuristic_", colnames(SP500dailyPrices_linearReturn_train))
+w_heuristic
 
-#Weekly
-SP500weeklyReturnsTrainBuyHold <- SP500weeklyReturnsTrain[1,] 
-SP500weeklyReturnsTestBuyHold <- SP500weeklyReturnsTest[1,]
+barplot(w_heuristic, beside = TRUE, main = "Weights of Heuristic Portfolios", legend = colnames(w_heuristic), col = rainbow(11), legend.loc = "topleft")
 
-## • Equally weighted portfolio
+# compute returns of all heuristic portfolios
+heuristic_returns_linearReturn <- xts(SP500dailyPrices_linearReturn %*% w_heuristic, index(SP500dailyPrices_linearReturn))
+head(heuristic_returns_linearReturn)
 
-#Daily
-SP500dailyReturnsTrainEquallyWeighted <- apply(SP500dailyReturnsTrain, 1, mean) # apply is a function that applies a function to each column of a matrix
-SP500dailyReturnsTestEquallyWeighted <- apply(SP500dailyReturnsTest, 1, mean)
-#plot the results
-plot(SP500dailyReturnsTrainEquallyWeighted, type = "l", col = "blue", main = "Equally Weighted Portfolio", xlab = "Date", ylab = "Returns")
-lines(SP500dailyReturnsTestEquallyWeighted, col = "red")
-legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
-
-#Weekly
-SP500weeklyReturnsTrainEquallyWeighted <- apply(SP500weeklyReturnsTrain, 1, mean)
-SP500weeklyReturnsTestEquallyWeighted <- apply(SP500weeklyReturnsTest, 1, mean)
-
-
-
-library(PortfolioAnalytics)
+#Performance measures
 library(PerformanceAnalytics)
+# Table of Annualized Return, Annualized Std Dev, and Annualized Sharpe
+t(table.AnnualizedReturns(heuristic_returns_linearReturn, scale = 252, Rf = 0.0))
 
+#train and test
+heuristic_returns_linearReturn_train <- xts(SP500dailyPrices_linearReturn_train %*% w_heuristic, index(SP500dailyPrices_linearReturn_train))
+head(heuristic_returns_linearReturn_train)
 
-## • Quintile portfolio its used to divide the stocks in 5 groups according to their returns
-quintile_portfolio_fun <- function(x) {
-  quintile <- cut(x, breaks = 5, labels = FALSE)
-  quintile_portfolio <- rep(0, length(x))
-  for (i in 1:5) {
-    quintile_portfolio[quintile == i] <- 1 / sum(quintile == i)
-  }
-  return(quintile_portfolio)
-}
+heuristic_returns_linearReturn_test <- xts(SP500dailyPrices_linearReturn_test %*% w_heuristic, index(SP500dailyPrices_linearReturn_test))
+head(heuristic_returns_linearReturn_test)
 
+#Summary statistics of the returns of all heuristic portfolios
+table.DownsideRisk(heuristic_returns_linearReturn_train)
+table.DownsideRisk(heuristic_returns_linearReturn_test)
+####validar o codigo####
 
-#Daily
-SP500dailyReturnsTrainQuintile <- apply(SP500dailyReturnsTrain, 2, quintile_portfolio_fun)
-SP500dailyReturnsTestQuintile <- apply(SP500dailyReturnsTest, 2, quintile_portfolio_fun)
-#plot the results
-plot(SP500dailyReturnsTrainQuintile, type = "l", col = "blue", main = "Quintile Portfolio", xlab = "Date", ylab = "Returns")
-lines(SP500dailyReturnsTestQuintile, col = "red")
-legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
+"
+B. Estimate the Markowitz’s mean-variance portfolio (MVP) with no short-selling
+C. Estimate the Global Minimum Variance Portfolio (GMVP) with no short-selling
+D. Estimate the Maximum Sharpe ratio portfolio (MSRP)
+E. Empirically investigate the performance of the following Risk-Based Portfolios:
+    • Global minimum variance portfolio
+    • Inverse volatility portfolio
+    • Risk parity portfolio
+    • Most diversified portfolio
+    • Maximum decorrelation portfolio
+F. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
+"
 
-
-## B. Estimate the Markowitz’s mean-variance portfolio (MVP) with no short-selling
-Markowitz_portfolio_fun <- function(dataset, lambda=0.5, ...) {
-  X <- diff(log(dataset$adjusted))[-1]  # compute log returns
-  mu    <- colMeans(X)  # compute mean vector
-  Sigma <- cov(X)       # compute the SCM
-  # design mean-variance portfolio
-  w <- Variable(nrow(Sigma))
-  prob <- Problem(Maximize(t(mu) %*% w - lambda*quad_form(w, Sigma)),
-                  constraints = list(w >= 0, sum(w) == 1))
-  result <- solve(prob)
-  return(as.vector(result$getValue(w)))
-#Daily
-SP500dailyReturnsTrainMarkowitz <- Markowitz_portfolio_fun(SP500dailyReturnsTrain)
-SP500dailyReturnsTestMarkowitz <- Markowitz_portfolio_fun(SP500dailyReturnsTest)
-
-#plot the results
-plot(SP500dailyReturnsTrainMarkowitz, type = "l", col = "blue", main = "Markowitz Portfolio", xlab = "Date", ylab = "Returns")
-lines(SP500dailyReturnsTestMarkowitz, col = "red")
-legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
-
-## C. Estimate the Global Minimum Variance Portfolio (GMVP) with no short-selling 
-GMVP_portfolio_fun <- function(dataset, ...) {
-  X <- diff(log(dataset$adjusted))[-1]  # compute log returns
-  Sigma <- cov(X)  # compute SCM
-  # design GMVP
-  w <- solve(Sigma, rep(1, nrow(Sigma)))
-  w <- abs(w)/sum(abs(w))
-  return(w)
-}
-
-#Daily
-SP500dailyReturnsTrainGMVP <- GMVP_portfolio_fun(SP500dailyReturnsTrain)
-SP500dailyReturnsTestGMVP <- GMVP_portfolio_fun(SP500dailyReturnsTest)
-
-#plot the results
-plot(SP500dailyReturnsTrainGMVP, type = "l", col = "blue", main = "GMVP Portfolio", xlab = "Date", ylab = "Returns")
-lines(SP500dailyReturnsTestGMVP, col = "red")
-legend("topright", legend = c("Train", "Test"), col = c("blue", "red"), lty = 1, cex = 0.8)
-
-
-
-## D. Estimate the Maximum Sharpe ratio portfolio (MSRP)
-MSRP_portfolio_fun <- function(dataset, ...) {
-  X <- diff(log(dataset$adjusted))[-1]  # compute log returns
-  mu    <- colMeans(X)  # compute mean vector
-  Sigma <- cov(X)       # compute the SCM
-  # design MSRP
-  w <- Variable(nrow(Sigma))
-  prob <- Problem(Maximize(t(mu) %*% w / sqrt(quad_form(w, Sigma))),
-                  constraints = list(w >= 0, sum(w) == 1))
-  result <- solve(prob)
-  return(as.vector(result$getValue(w)))
-}
-
-#Daily
-SP500dailyReturnsTrainMSRP <- apply(SP500dailyReturnsTrain, 2, MSRP_portfolio_fun)
-SP500dailyReturnsTestMSRP <- apply(SP500dailyReturnsTest, 2, MSRP_portfolio_fun)
-
-# Backtesting and Plotting
-portfolios <- list(
-  "Buy & Hold" = SP500dailyReturnsTrainBuyHold,
-  "Equally Weighted" = SP500dailyReturnsTrainEquallyWeighted,
-  "Quintile" = SP500dailyReturnsTrainQuintile,
-  "Markowitz" = SP500dailyReturnsTrainMarkowitz,
-  "GMVP" = SP500dailyReturnsTrainGMVP,
-  "MSRP" = SP500dailyReturnsTrainMSRP
-)
-
-backtest <- function(portfolio, dataset) {
-  portfolio <- as.matrix(portfolio)
-  portfolio <- portfolio / rowSums(portfolio)
-  portfolio <- as.data.frame(portfolio)
-  colnames(portfolio) <- colnames(dataset)
-  portfolio <- as.matrix(portfolio)
-  portfolio <- portfolio * dataset
-  portfolio <- as.data.frame(portfolio)
-  portfolio <- rowSums(portfolio)
-  return(portfolio)
-}
-# portfolio weights
-backtest$Markowitz <- backtest(portfolios$Markowitz, SP500dailyReturnsTrain)
-
-
-
-
-## E. Empirically investigate the performance of the following Risk-Based Portfolios:
-
-## • Global minimum variance portfolio
-#Daily
-
-
-## • Inverse volatility portfolio
-#Daily
-SP500dailyReturnsTrainInverseVolatility <- apply(SP500dailyReturnsTrain, 1, function(x) 1/sd(x)) # function(x) 1/sd(x) is a function that computes the inverse of the standard deviation of a vector x
-SP500dailyReturnsTestInverseVolatility <- apply(SP500dailyReturnsTest, 1, function(x) 1/sd(x))
-
-
-## • Risk parity portfolio 
-#Daily
-
-
-
-## • Most diversified portfolio
-#Daily
-
-## • Maximum decorrelation portfolio
-#Daily
-
-
-## F. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
-
-#Daily
-SP500dailyReturnsTrainPortfolioPerformance <- data.frame(BuyHold = SP500dailyReturnsTrainBuyHold, 
-                                                        EquallyWeighted = SP500dailyReturnsTrainEquallyWeighted, 
-                                                        Quintile = SP500dailyReturnsTrainQuintile, 
-                                                        GMR = SP500dailyReturnsTrainGMR, 
-                                                        MVP = SP500dailyReturnsTrainMVP, 
-                                                        GMVP = SP500dailyReturnsTrainGMVP, 
-                                                        MSRP = SP500dailyReturnsTrainMSRP, 
-                                                        GMVP = SP500dailyReturnsTrainGMVP, 
-                                                        InverseVolatility = SP500dailyReturnsTrainInverseVolatility, 
-                                                        RiskParity = SP500dailyReturnsTrainRiskParity, 
-                                                        MostDiversified = SP500dailyReturnsTrainMostDiversified, 
-                                                        MaximumDecorrelation = SP500dailyReturnsTrainMaximumDecorrelation)
-SP500dailyReturnsTrainPortfolioPerformance
-# create visualization 
-SP500dailyReturnsTrainPortfolioPerformance %>% 
-  gather(key = "Portfolio", value = "Return", -Date) %>% 
-  ggplot(aes(x = Date, y = Return, color = Portfolio)) + 
-  geom_line() + 
-  labs(title = "Portfolio Performance", x = "Date", y = "Return") + 
-  theme_minimal()
-
-#plot lines of the different portfolios each line with a different color
-plot(SP500dailyReturnsTrainPortfolioPerformance, type = "l", col = c("red", "blue", "green", "black", "yellow", "pink", "orange", "purple", "brown", "grey", "cyan", "magenta"))
-
-
-
-plot(SP500dailyReturnsTrainPortfolioPerformance, type = "h", main = "Performance of the Heuristic Portfolios",
-          ylab = "", xlab = "", col = "blue")
-lines(SP500dailyReturnsTrainMVP, type = "h", col = "red")
-lines(SP500dailyReturnsTrainGMVP, type = "h", col = "green")
-lines(SP500dailyReturnsTrainMSRP, type = "h", col = "orange")
-lines(SP500dailyReturnsTrainGMVP, type = "h", col = "purple")
-lines(SP500dailyReturnsTrainInverseVolatility, type = "h", col = "brown")
-lines(SP500dailyReturnsTrainRiskParity, type = "h", col = "pink")
-lines(SP500dailyReturnsTrainMostDiversified, type = "h", col = "grey")
-lines(SP500dailyReturnsTrainMaximumDecorrelation, type = "h", col = "black")
-legend("topright", legend = c("Buy & Hold", "Equally Weighted", "Quintile", "GMR", "MVP", "GMVP", "MSRP", "Inverse Volatility", "Risk Parity", "Most Diversified", "Maximum Decorrelation"), 
-       col = c("blue", "blue", "blue", "blue", "red", "green", "orange", "purple", "brown", "pink", "grey", "black"), lty = 1, cex = 0.8)
-
-## G. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the test data set.
-
-#Daily
-SP500dailyReturnsTestPortfolioPerformance <- data.frame(BuyHold = SP500dailyReturnsTestBuyHold, 
-                                                        EquallyWeighted = SP500dailyReturnsTestEquallyWeighted, 
-                                                        Quintile = SP500dailyReturnsTestQuintile, 
-                                                        GMR = SP500dailyReturnsTestGMR, 
-                                                        MVP = SP500dailyReturnsTestMVP, 
-                                                        GMVP = SP500dailyReturnsTestGMVP, 
-                                                        MSRP = SP500dailyReturnsTestMSRP, 
-                                                        GMVP = SP500dailyReturnsTestGMVP, 
-                                                        InverseVolatility = SP500dailyReturnsTestInverseVolatility, 
-                                                        RiskParity = SP500dailyReturnsTestRiskParity, 
-                                                        MostDiversified = SP500dailyReturnsTestMostDiversified, 
-                                                        MaximumDecorrelation = SP500dailyReturnsTestMaximumDecorrelation)
-SP500dailyReturnsTestPortfolioPerformance   
-
+#4.1-B.1-Markowitz’s mean-variance portfolio (MVP) with no short-selling
