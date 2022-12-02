@@ -4,6 +4,7 @@ install.packages("tseries")
 install.packages("forecast")
 install.packages("fGarch")
 install.packages("rugarch")
+install.packages("pacman")
 
 
 rm(list=ls(all=TRUE))
@@ -12,11 +13,27 @@ close.screen(all = TRUE)
 erase.screen()
 windows.options(record=TRUE)
 
-p_load(xts)                   # to manipulate time series of stock data
 p_load(quantmod)              # to download stock data
 p_load(PerformanceAnalytics)  # to compute performance measures
+p_load(tseries)               # to compute performance measures
+p_load(forecast)              # to compute performance measures
+p_load(fGarch)                # to compute performance measures
+p_load(rugarch)               # to compute performance measures
 p_load(CVXR)                  # Convex Optimization in R
-p_load(riskParityPortfolio)   # RPP
+p_load(DT)
+p_load(riskParityPortfolio)  # Risk Parity Portfolio
+#or 
+library(quantmod)
+library(PerformanceAnalytics)
+library(tseries)
+library(forecast)
+library(fGarch)
+library(rugarch)
+library(CVXR)
+library(DT)
+library(riskParityPortfolio)
+library(xts)
+
 
 # -------------------------------------------------------------------------------------------
 # Loading Data
@@ -40,7 +57,7 @@ p_load(riskParityPortfolio)   # RPP
 getSymbols("AAPL", from = "2015-01-01", to = "2021-12-30") #Apple stock in the consumer discretionary sector
 SP500dailyPrices <- AAPL$AAPL.Adjusted
 head(SP500dailyPrices)
-dim(SP500dailyReturns)
+dim(SP500dailyPrices)
 
 getSymbols("MSFT", from = "2015-01-01", to = "2021-12-30") #Microsoft stock in the information technology sector
 SP500dailyPrices <- cbind(SP500dailyPrices, MSFT$MSFT.Adjusted) #ajusted closing price is used to compute the daily return of the stock without the effect of stock splits and dividends
@@ -83,6 +100,7 @@ dim(SP500dailyPrices)
 
 #weekly prices 
 SP500weeklyPrices <- SP500dailyPrices[seq(1, nrow(SP500dailyPrices), 5),] #select every 5th row
+
 head(SP500weeklyPrices)
 tail(SP500weeklyPrices)
 dim(SP500weeklyPrices)
@@ -139,7 +157,7 @@ write.csv(SP500weeklyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/One
 #3-Compute Empirically investigate the stylized facts of financial market returns different data frequencies: 
 #3.1-The statistical distribution of financial market returns is not normal
 
-#3.1.1-Daily linearof market
+#3.1.1-Daily linear of market
 
 hist(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
 
@@ -191,6 +209,56 @@ hist(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "D
 #    • Quintile portfolio
 #    • Global maximum return portfolio
 
+chart.Boxplot(SP500dailyPrices_linearReturn, main = "Daily Linear Return", xlab = "Stocks", ylab = "Daily Linear Return", col = "blue") #boxplot of daily linear return
+chart.Boxplot(SP500dailyPrices_logReturn, main = "Daily Log Return", xlab = "Stocks", ylab = "Daily Log Return", col = "blue") #boxplot of daily log return
+ 
+#remove outliers form the dataset ("AAPL", "MSFT", "GOOGL", "NKE", "KO", "TSLA", "JNJ", "V", "GS", "NFLX", "AMT")
+#AAPL
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$AAPL > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$AAPL < 0.1]
+#MSFT
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$MSFT > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$MSFT < 0.1]
+#GOOGL
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$GOOGL > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$GOOGL < 0.1]
+#NKE
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$NKE > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$NKE < 0.1]
+#KO
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$KO > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$KO < 0.1]
+#TSLA
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$TSLA > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$TSLA < 0.1]
+#JNJ
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$JNJ > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$JNJ < 0.1]
+#V
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$V > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$V < 0.1]
+#GS
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$GS > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$GS < 0.1]
+#NFLX
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$NFLX > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$NFLX < 0.1]
+#AMT
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$AMT > -0.1]
+SP500dailyPrices_linearReturn <- SP500dailyPrices_linearReturn[SP500dailyPrices_linearReturn$AMT < 0.1]
+
+chart.Boxplot(SP500dailyPrices_linearReturn, main = "Daily Linear Return", xlab = "Stocks", ylab = "Daily Linear Return", col = "blue") #boxplot of daily linear return
+
+
+
+
+####################################
+####################################
+####################################
+# remove outliers returns greater 0.1 and less -0.1
+####################################
+####################################
+####################################
 
 ## Split the dataset of daily returns into a training set (2/3 of data) and a test set (1/3 of data)
 #split SP500dailyPrices_linearReturn  
@@ -346,4 +414,169 @@ E. Empirically investigate the performance of the following Risk-Based Portfolio
 F. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
 "
 
-#4.1-B.1-Markowitz’s mean-variance portfolio (MVP) with no short-selling
+#4.1-B-Markowitz’s mean-variance portfolio (MVP) with no short-selling
+mu <- colMeans(SP500dailyPrices_logReturn_train) #vector of expected returns
+Sigma <- cov(SP500dailyPrices_logReturn_train) # covariance matrix
+# Markowitz mean-variance portfolio
+
+Markowitz_portfolio_fun <- function(mu, Sigma, lambda=0.5, ...) {
+  # design mean-variance portfolio
+  w <- Variable(nrow(Sigma))
+  prob <- Problem(Maximize(t(mu) %*% w - lambda*quad_form(w, Sigma)),
+                  constraints = list(w >= 0, sum(w) == 1))
+  result <- solve(prob)
+  return(as.vector(result$getValue(w)))
+}
+
+w_Markowitz <- Markowitz_portfolio_fun(mu, Sigma, lambda=0.5)
+
+w_Markowitz
+
+
+#4.1-C-Global Minimum Variance Portfolio (GMVP) with no short-selling
+# GMVP (with heuristic not to allow short-selling) its used to compute the weights of the stocks in the portfolio
+
+GMVP_portfolio_fun <- function(dataset, ...) {
+  X <- dataset  # compute log returns
+  Sigma <- cov(X)  # compute SCM
+  # design GMVP
+  w <- solve(Sigma, rep(1, nrow(Sigma)))
+  w <- abs(w)/sum(abs(w))
+  return(w)
+}
+
+w_GMVP <- GMVP_portfolio_fun(SP500dailyPrices_logReturn_train)
+
+w_GMVP
+
+
+# Quintile portfolio its used to divide the stocks in 5 groups according to their returns
+
+quintile_portfolio_fun <- function(dataset, ...) {
+  X <- dataset  # compute log returns
+  N <- ncol(X)
+  # design quintile portfolio
+  ranking <- sort(colMeans(X), decreasing = TRUE, index.return = TRUE)$ix
+  w <- rep(0, N)
+  w[ranking[1:round(N/5)]] <- 1/round(N/5)
+  return(w)
+}
+
+w_Quintile <- quintile_portfolio_fun(SP500dailyPrices_logReturn_train)
+
+w_Quintile
+
+
+#4.1-D.1-Maximum Sharpe ratio portfolio (MSRP)
+# Estimation of the expected return and covariance matrix
+mu <- colMeans(SP500dailyPrices_logReturn_train) #vector of expected returns
+Sigma <- cov(SP500dailyPrices_logReturn_train) # covariance matrix
+
+
+MSRP <- function(mu, Sigma) {
+  w_ <- Variable(nrow(Sigma))
+  prob <- Problem(Minimize(quad_form(w_, Sigma)),
+                  constraints = list(w_ >= 0, t(mu) %*% w_ == 1))
+  result <- CVXR::solve(prob)
+  w <- as.vector(result$getValue(w_)/sum(result$getValue(w_)))
+  names(w) <- colnames(Sigma)
+  return(w)
+}
+
+w_MSRP <- MSRP(mu, Sigma)
+
+barplot(w_MSRP, col = rainbow8equal[1:8], main = "Maximum Sharpe ratio portfolio (MSRP)", 
+        xlab = "stocks", ylab = "weights", beside = TRUE, legend = colnames(w_MSRP))
+
+"
+E. Empirically investigate the performance of the following Risk-Based Portfolios:
+    • Global minimum variance portfolio
+    • Inverse volatility portfolio
+    • Risk parity portfolio
+    • Most diversified portfolio
+    • Maximum decorrelation portfolio
+F. Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
+"
+# Estimation of the expected return and covariance matrix
+mu <- colMeans(SP500dailyPrices_logReturn_train) #vector of expected returns
+Sigma <- cov(SP500dailyPrices_logReturn_train) # covariance matrix
+
+
+#4.1-E.1-Global minimum variance portfolio
+
+
+#4.1-E.2-Inverse volatility portfolio
+
+IVP <- function(Sigma) {
+  sigma <- sqrt(diag(Sigma))
+  w <- 1/sigma
+  w <- w/sum(w)
+  return(w)
+}
+
+# this function can now be used as
+w_IVP <- IVP(Sigma)
+
+barplot(w_IVP, col = rainbow8equal[1:8], main = "Inverse volatility portfolio (IVP)", 
+        xlab = "stocks", ylab = "weights", beside = TRUE, legend = colnames(w_IVP))
+
+#4.1-E.3-Risk parity portfolio
+
+rpp <- riskParityPortfolio(Sigma)
+names(rpp)
+
+# portfolio weights
+rpp$w
+
+# Relative risk contribution (RRC)
+rpp$relative_risk_contribution
+
+#4.1-E.4-Most diversified portfolio MDP weights
+
+w_MDP <- MSRP(mu = sqrt(diag(Sigma)), Sigma); round(w_MDP,2)
+
+barplot(w_MDP, col = rainbow8equal[1:8], main = "Most diversified portfolio (MDP)", 
+        xlab = "stocks", ylab = "weights", beside = TRUE, legend = colnames(w_MDP))
+
+
+#4.1-E.5- Maximum decorrelation portfolio
+
+# -----------------------------------------
+# C. Maximum decorrelation portfolio (MDCP)
+# -----------------------------------------
+
+# create function for MDCP based on GMVP()
+
+# create function for GMVP
+GMVP <- function(Sigma) {
+  w <- Variable(nrow(Sigma))
+  prob <- Problem(Minimize(quad_form(w, Sigma)), 
+                  constraints = list(w >= 0, sum(w) == 1))
+  result <- CVXR::solve(prob)
+  w <- as.vector(result$getValue(w))
+  names(w) <- colnames(Sigma)
+  return(w)
+}
+
+# this function can now be used as (GMVP weights)
+w_GMVP <- GMVP(Sigma); round(w_GMVP,2)
+
+barplot(w_GMVP, col = rainbow8equal[1:8], main = "Global minimum variance portfolio (GMVP)", 
+        xlab = "stocks", ylab = "weights", beside = TRUE, legend = colnames(w_GMVP))
+
+
+# MDCP portfolio
+MDCP <- function(Sigma) {
+  C <- diag(1/sqrt(diag(Sigma))) %*% Sigma %*% diag(1/sqrt(diag(Sigma)))
+  colnames(C) <- colnames(Sigma)
+  return(GMVP(Sigma = C))
+}
+
+# this function can now be used as
+w_MDCP <- MDCP(Sigma)
+
+barplot(w_MDCP, col = rainbow8equal[1:8], main = "Maximum decorrelation portfolio (MDCP)", 
+        xlab = "stocks", ylab = "weights", beside = TRUE, legend = colnames(w_MDCP))
+
+#4.1-F.1-Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
+
