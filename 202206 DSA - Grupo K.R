@@ -6,11 +6,28 @@
 #João Carlos Fidalgo / 20222059 
 #Grupo K
 #------------------------------------------------------------------------ #
+#  usar # 
+"""As a first task, you are asked to answer the following questions on a small report:
+1. Perform a detailed descriptive statistical data analysis of the Number of Claims of the Third
+Party Liability on Automobile Insurance. Comment on the features observed and highlight
+values or patterns that you think are important to characterize the phenomenom.
+2. Perform a detailed descriptive statistical data analysis of Claims Severity of the Third Party
+Liability on Automobile Insurance. Comment on the features observed and highlight values or
+patterns that you think are important to characterize the phenomenom.
+3. Fit distributions to the Number of Claims and Claim Severity, including the following requests:
+    For the Number of Claims, remove the highest outlier from data. Refer that fact on your
+report.
+    For Claims Severity, choose an upper bound that allows you to fit a distribution of the
+Exponential Family. Comment, on your report, the upper bound considered and the
+number of claims removed from data and justify your choice.
+    What is the mean value and standard deviation of the claims removed from data in question3? 
+Plot the removed data in a histogram and a boxplot. Comment. Give your opinion on
+how should the insurer include that data on the final premium structure."""
 
 
 rm(list=ls(all=TRUE))
 # ------------------------------------------------------------------------
-### 1. Reading the data files ###
+### Reading the data files ###
 # ------------------------------------------------------------------------
 
 portfolio=read.table(choose.files(),header=TRUE,sep=";")#choose autodata.txt
@@ -27,15 +44,19 @@ head(claims)
 nrow(claims)
 fix(claims)
 
+
+
 # ------------------------------------------------------------------------
-### 2. The study will rely only on the Third Party Liability coverage ###
+### The study will rely only on the Third Party Liability coverage ###
 # ------------------------------------------------------------------------
 TPclaims=claims[claims$coverage=="1RC",]
 nrow(TPclaims)
 
-### Organizing the files data ###
+
+#1. Perform a detailed descriptive statistical data analysis of the Number of Claims of the Third Party Liability on Automobile Insurance. 
+
 # ------------------------------------------------------------------------
-### 3.1 Number of Claims per Policy ###
+### Number of Claims per Policy ###
 # Counting the number of claims for each policy
 # ------------------------------------------------------------------------
 T=table(TPclaims$ncontract)
@@ -46,7 +67,6 @@ I = portfolio$ncontract%in%T1
 T1=portfolio$ncontract[I==FALSE]
 n2 = data.frame(ncontract=T1,nclaims=0)
 number=rbind(n1,n2)
-table(number$nclaims)
 
 # Frequency
 baseFREQ = merge(portfolio,number)
@@ -54,16 +74,20 @@ head(baseFREQ)
 nrow(baseFREQ)
 
 # ------------------------------------------------------------------------
-# 3.2 Severity
+#The portfolio have 50000 policies and 7.569 claims, 15% of the policies have claims:
+# 0 claims = 47510
+# 1 claim = 2313
+# 2 claims = 162 
+# 3 claims = 12
+# 4 claims = 2
+# 16 claims = 1
+#total of claims = 2313 + 162*2 + 12*3 + 2*4 + 1*16 = 2697
 # ------------------------------------------------------------------------
 
-baseSEV=merge(portfolio,TPclaims) 
-tail(baseSEV)
-nrow(baseSEV)
-baseSEV=baseSEV[baseSEV$cost>0,]
-nrow(baseSEV)
 
-## Note: Variable n is the database key. It allows to link the insureds data in both files
+#1.1Comment on the features observed and highlight values or patterns that you think are important to characterize the phenomenom.
+
+
 
 # ------------------------------------------------------------------------
 #       DESCRIPTIVE STATISTICAL ANALYSIS OF THE PORTFOLIO
@@ -75,13 +99,38 @@ nrow(baseSEV)
 
 ### Mean and Variance ###
 
-N<-baseFREQ$nclaims
-E<-baseFREQ$exposition
-lambda<-print(sum(N)/sum(E))
-#or
-lambda<-print(weighted.mean(N/E,E))
+N<-baseFREQ$nclaims # number of claims
+E<-baseFREQ$exposition # exposure
+sum_N<-sum(N) # total number of claims 2.697
+sum_e<-sum(E) # total exposure 26.431.13
 
-variance<-print(weighted.mean((N/E-lambda)^2,E))
+lambda<-print(sum(N)/sum(E)) # mean is 0.1020 claims per policy
+
+variance<-print(weighted.mean((N/E-lambda)^2,E)) #variance is 0.34 that means that the data is not Poisson distributed
+
+
+
+
+
+# ........................................................................
+#   Individual Analysis of Explanatory Variables
+# ........................................................................
+
+### Example: Fuel ####
+
+X1<-factor(baseFREQ$fuel);X1 #factor is a categorical variable
+levels(X1)
+
+tapply(N,X1,sum)  # tapplies the function sum to the variable N according to the levels of X1
+# Shows the number of claims in each of the Fuel variable Levels
+
+tapply(N,X1,sum)/tapply(E,X1,sum) 
+# Claim Frequency for type of fuel
+
+# Comparing the means for type of fuel
+#install.packages("weights")
+library(weights)
+wtd.t.test(x=(N/E)[X1=="D"],y=(N/E)[X1=="E"],weight=E[X1=="D"],weighty=E[X1=="E"],samedata=FALSE)  
 
 
  ### Contingency Tables ###
@@ -204,15 +253,28 @@ interactiongraphic(title="Claim Frequency vs Brand of Vehicle",name="brand", con
 interactiongraphic(title="Claim Frequency vs Type of Fuel",name="fuel", contin=FALSE)
 
 
+#2. Perform a detailed descriptive statistical data analysis of Claims Severity of the Third Party
+#Liability on Automobile Insurance. Comment on the features observed and highlight values or
+#patterns that you think are important to characterize the phenomenom.
+
+# ------------------------------------------------------------------------
+#  Severity
+# ------------------------------------------------------------------------
+
+baseSEV=merge(portfolio,TPclaims) 
+tail(baseSEV)
+nrow(baseSEV)
+baseSEV=baseSEV[baseSEV$cost>0,] # >0 to remove the claims with cost=0 because they are not relevant for the study (accident report only)
+nrow(baseSEV) # 1.924 severity claims
+
+## Note: Variable n is the database key. It allows to link the insureds data in both files
+
 # ........................................................................
 #   CLAIMS SEVERITY
 # ........................................................................
-
-
 ### Preliminary Analysis of Data ###
 
 baseSEV<-baseSEV[baseSEV$cost>0,]
-
 # min, max
 min(baseSEV$cost)
 max(baseSEV$cost)
@@ -251,7 +313,6 @@ boxplot(baseSEV_withlim$cost, main="Claim Costs BoxPlot",horizontal=TRUE, col="d
 # Histogram
 breakshist=seq(0,limSup+1,by=step)
 histCOST_withlim<-hist(baseSEV_withlim$cost, main="Claim Costs", col="dodgerblue",xlab="Cost", ylab="",xlim=c(0,limSup),ylim=c(0,1000),breaks=breakshist)
-
 
 
 # ........................................................................
@@ -323,6 +384,7 @@ interactiongraphic_cost=function(title="Frequency and Severity vs Age of Driver"
 }
 
 
+
 ### Plotting some interaction graphics ###
 
 # Age of the Driver
@@ -341,6 +403,9 @@ Q[1]=Q[1]-1
 
 interactiongraphic_cost(title="Frequency and Claim Cost vs Age of Vehicle",name="agevehicle",lev=Q,contin=TRUE)
 
-
-
-# You should fit a distribution to Claim Amounts data
+# ........................................................................
+#3. Fit distributions to the Number of Claims and Claim Severity, including the following requests:
+#    3.1 -For the Number of Claims, remove the highest outlier from data. Refer that fact on your report.
+#    3.2-For Claims Severity, choose an upper bound that allows you to fit a distribution of the Exponential Family. Comment, on your report, the upper bound considered and the number of claims removed from data and justify your choice.
+#    3.3- What is the mean value and standard deviation of the claims removed from data in question3? Plot the removed data in a histogram and a boxplot. Comment. Give your opinion on how should the insurer include that data on the final premium structure.
+# ........................................................................
