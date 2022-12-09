@@ -365,20 +365,28 @@ w_Quintile
 w_GMRP <- mu/sum(mu)
 w_GMRP
 
-i_max <- which(mu == max(mu))
-w_GMRP <- matrix(0, nrow = 11, ncol = 1)
-w_GMRP[i_max,1] <- 1
+N <- ncol(Sigma)
+i_max <- which.max(mu)
+w_GMRP <- rep(0, N)
+w_GMRP[i_max] <- 1
 names(w_GMRP) <- colnames(SP500dailyPrices_linearReturn_train)
 w_GMRP
 
+#i_max <- which(mu == max(mu))
+#w_GMRP <- matrix(0, nrow = 11, ncol = 1)
+#w_GMRP[i_max,1] <- 1
+#names(w_GMRP) <- colnames(SP500dailyPrices_linearReturn_train)
+#w_GMRP
+
 #put together all portfolios w_EW, w_Quintile, w_GMRP
-w_heuristic <- cbind(w_EW, w_Quintile, w_GMRP)
+w_heuristic <- cbind("EWP" = w_EW, "Quintile"= w_Quintile,"GMRP" = w_GMRP)
 round(w_heuristic, digits = 2)
-rownames(w_heuristic) <- colnames(SP500dailyPrices_linearReturn_train)
-colnames(w_heuristic) <- paste0("w_heuristic_", colnames(SP500dailyPrices_linearReturn_train))
+#rownames(w_heuristic) <- colnames(SP500dailyPrices_linearReturn_train)
+#colnames(w_heuristic) <- paste0("w_heuristic_", colnames(SP500dailyPrices_linearReturn_train))
 w_heuristic
 
-barplot(w_heuristic, beside = TRUE, main = "Weights of Heuristic Portfolios", legend = colnames(w_heuristic), col = rainbow(11), legend.loc = "topleft")
+barplot(t(w_heuristic), col = rainbow(11), legend = colnames(w_heuristic), beside = TRUE,
+        main = "Portfolio allocation of heuristic portfolios", xlab = "stocks", ylab = "dollars")
 
 # compute returns of all heuristic portfolios
 heuristic_returns_linearReturn <- xts(SP500dailyPrices_linearReturn %*% w_heuristic, index(SP500dailyPrices_linearReturn))
