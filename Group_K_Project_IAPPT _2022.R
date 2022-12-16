@@ -1,3 +1,4 @@
+install.packages("portfolioBacktest")
 install.packages("quantmod")
 install.packages("PerformanceAnalytics")
 install.packages("tseries")
@@ -13,6 +14,7 @@ close.screen(all = TRUE)
 erase.screen()
 windows.options(record=TRUE)
 
+p_load(portfolioBacktest)     # portfolio Backtesting
 p_load(quantmod)              # to download stock data
 p_load(PerformanceAnalytics)  # to compute performance measures
 p_load(tseries)               # to compute performance measures
@@ -23,6 +25,7 @@ p_load(CVXR)                  # Convex Optimization in R
 p_load(DT)
 p_load(riskParityPortfolio)  # Risk Parity Portfolio
 #or 
+library(portfolioBacktest)
 library(quantmod)
 library(PerformanceAnalytics)
 library(tseries)
@@ -33,6 +36,9 @@ library(CVXR)
 library(DT)
 library(riskParityPortfolio)
 library(xts)
+
+help(package = "portfolioBacktest")
+?portfolioBacktest
 
 
 # -------------------------------------------------------------------------------------------
@@ -142,12 +148,12 @@ summary(SP500weeklyPrices_logReturn)
 
 
 #save the data frame as a csv file on the folder "C:\Users\João Carlos Fidalgo\OneDrive - Banco de Cabo Verde\Pós-Graduação_ Data_science\2-IAPT_Investments, Asset Pricing_Portfolio Theory"
-write.csv(SP500dailyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices.csv", row.names = TRUE)
-write.csv(SP500dailyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_linearReturn.csv", row.names = TRUE)
-write.csv(SP500dailyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_logReturn.csv", row.names = TRUE)
-write.csv(SP500weeklyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices.csv", row.names = TRUE)
-write.csv(SP500weeklyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_linearReturn.csv", row.names = TRUE)
-write.csv(SP500weeklyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_logReturn.csv", row.names = TRUE)
+#write.csv(SP500dailyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices.csv", row.names = TRUE)
+#write.csv(SP500dailyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_linearReturn.csv", row.names = TRUE)
+#write.csv(SP500dailyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_logReturn.csv", row.names = TRUE)
+#write.csv(SP500weeklyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices.csv", row.names = TRUE)
+#write.csv(SP500weeklyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_linearReturn.csv", row.names = TRUE)
+#write.csv(SP500weeklyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_logReturn.csv", row.names = TRUE)
 
 ## number of stocks
 
@@ -159,14 +165,89 @@ write.csv(SP500weeklyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/One
 
 #3.1.1-Daily linear of market
 
-hist(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
-
+hist(SP500dailyPrices_linearReturn$AAPL,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
 qqnorm(SP500dailyPrices_linearReturn$AAPL, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
 qqline(SP500dailyPrices_linearReturn$AAPL, col = "blue")
 
+
+hist(SP500dailyPrices_linearReturn$AMT,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$AMT, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$AMT, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$AMT, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$AMT, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$AMT, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$GOOGL,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$GOOGL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$GOOGL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$GOOGL, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$GOOGL, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$GOOGL, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$GS,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$GS, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$GS, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$GS, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$GS, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$GS, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$JNJ,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$JNJ, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$JNJ, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$JNJ, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$JNJ, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$JNJ, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$KO,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$KO, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$KO, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$KO, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$KO, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$KO, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$MSFT,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$MSFT, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$MSFT, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$MSFT, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$MSFT, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$MSFT, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$NFLX,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$NFLX, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$NFLX, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$NFLX, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$NFLX, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$NFLX, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$NKE,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$NKE, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$NKE, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$NKE, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$NKE, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$NKE, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$TSLA,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$TSLA, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$TSLA, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$TSLA, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$TSLA, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$TSLA, col = "blue")
+
+hist(SP500dailyPrices_linearReturn$V,main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+summary(SP500dailyPrices_linearReturn$V, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$V, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$V, main = "Daily Linear Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
+qqnorm(SP500dailyPrices_linearReturn$V, main = "Daily Linear Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily linear return
+qqline(SP500dailyPrices_linearReturn$V, col = "blue")
+
 #3.1.2-Daily log
 hist(SP500dailyPrices_logReturn$AAPL, main = "Daily Log Return", xlab = "Daily Log Return", col = "blue", breaks = 100) #histogram of daily log return
-
+summary(SP500dailyPrices_linearReturn$V, main = "Daily Log Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+skewness(SP500dailyPrices_linearReturn$V, main = "Daily Log Return", xlab = "Daily Linear Return", col = "blue", breaks = 100) #histogram of daily linear return
+kurtosis(SP500dailyPrices_linearReturn$V, main = "Daily Log Return", xlab = "Daily Linear Return", col = "blue", breaks = 100)
 qqnorm(SP500dailyPrices_logReturn$AAPL, main = "Daily Log Return", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", col = "blue") #qqplot of daily log return
 qqline(SP500dailyPrices_logReturn$AAPL, col = "blue")
 
@@ -585,6 +666,33 @@ w_MDCP <- MDCP(Sigma)
 
 barplot(w_MDCP, col = rainbow8equal[1:8], main = "Maximum decorrelation portfolio (MDCP)", 
         xlab = "stocks", ylab = "weights", beside = TRUE, legend = colnames(w_MDCP))
+
+
+
+portfolios <- list("MVP"=w_Markowitz, 
+                   "GMVP"= w_GMVP,
+                   "MSRP" = w_MSRP,
+                   "IVP" = w_IVP,
+                   "rpp" = rpp,
+                   "MDCP" = w_MDCP
+                   )
+
+set.seed(123)
+my_dataset_list <- financialDataResample(SP500dailyPrices_linearReturn_train, 
+                                         N_sample = 10,     # Desired number of financial instruments in each resample
+                                         T_sample = 252*6,  # Desired length of each resample (consecutive samples with a random initial time)
+                                         num_datasets = 10) # Number of resampled datasets
+
+bt <- portfolioBacktest(portfolios, my_dataset_list, 
+                        benchmark = c("1/N"),   # benchmark portfolios
+                        rebalance_every = 21,
+                        optimize_every = 21,
+                        lookback = 252,         # Length of the lookback rolling window in periods
+                        shortselling = F)
+
+names(bt)
+
+bt$Markowitz$`dataset 1`$w_bop[1,]     # portfolio weights
 
 #4.1-F.1-Compare the performance of the alternative Heuristic, MVP, GMVP and MSRP and Risk-Based Portfolios in the training data set.
 
