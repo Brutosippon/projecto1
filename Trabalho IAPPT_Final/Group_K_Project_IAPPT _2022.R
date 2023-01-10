@@ -148,12 +148,12 @@ summary(SP500weeklyPrices_logReturn)
 
 
 #save the data frame as a csv file on the folder "C:\Users\João Carlos Fidalgo\OneDrive - Banco de Cabo Verde\Pós-Graduação_ Data_science\2-IAPT_Investments, Asset Pricing_Portfolio Theory"
-#write.csv(SP500dailyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices.csv", row.names = TRUE)
-#write.csv(SP500dailyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_linearReturn.csv", row.names = TRUE)
-#write.csv(SP500dailyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500dailyPrices_logReturn.csv", row.names = TRUE)
-#write.csv(SP500weeklyPrices, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices.csv", row.names = TRUE)
-#write.csv(SP500weeklyPrices_linearReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_linearReturn.csv", row.names = TRUE)
-#write.csv(SP500weeklyPrices_logReturn, file = "C:/Users/João Carlos Fidalgo/OneDrive - Banco de Cabo Verde/Pós-Graduação_ Data_science/2-IAPT_Investments, Asset Pricing_Portfolio Theory/SP500weeklyPrices_logReturn.csv", row.names = TRUE)
+write.csv(SP500dailyPrices, file = "C:/Users/BCV/Desktop/Trabalho IAPPT/Asset Pricing_Portfolio Theory, SP500dailyPrices.csv", row.names = TRUE)
+write.csv(SP500dailyPrices_linearReturn, file = "C:/Users/BCV/Desktop/Trabalho IAPPT/Asset Pricing_Portfolio Theory, SP500dailyPrices_linearReturn.csv", row.names = TRUE)
+write.csv(SP500dailyPrices_logReturn, file = "C:/Users/BCV/Desktop/Trabalho IAPPT/Asset Pricing_Portfolio Theory, SP500dailyPrices_logReturn.csv", row.names = TRUE)
+write.csv(SP500weeklyPrices, file = "C:/Users/BCV/Desktop/Trabalho IAPPT/Asset Pricing_Portfolio Theory, SP500weeklyPrices.csv", row.names = TRUE)
+write.csv(SP500weeklyPrices_linearReturn, file = "C:/Users/BCV/Desktop/Trabalho IAPPT/Asset Pricing_Portfolio Theory, SP500weeklyPrices_linearReturn.csv", row.names = TRUE)
+write.csv(SP500weeklyPrices_logReturn, file = "C:/Users/BCV/Desktop/Trabalho IAPPT/Asset Pricing_Portfolio Theory, SP500weeklyPrices_logReturn.csv", row.names = TRUE)
 
 ## number of stocks
 
